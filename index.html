@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pretest · Diagnóstico y Manejo Clínico del Dengue</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --blue-900:#0a3d7a;
@@ -520,7 +522,7 @@
     <div class="hint">El pretest tiene 20 preguntas y una duración máxima de 40 minutos. Una vez iniciado, el cronómetro no se detiene.</div>
 
     <div class="actions">
-      <button class="btn btn-primary" onclick="startExam()">Iniciar pretest</button>
+      <button class="btn btn-primary" id="btn-start" onclick="startExam()">Iniciar pretest</button>
     </div>
   </div>
 
@@ -657,6 +659,20 @@ const QUESTIONS = [
    o:["Ausencia de fiebre por al menos 24-48 horas sin uso de antipiréticos","Persistencia de dolor abdominal intenso","Hematocrito en ascenso progresivo","Recuento de plaquetas en descenso continuo"], a:0},
 ];
 
+/* ---------------- FIREBASE ---------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyB1dzHxpCWCAdOa3ui5eijf39MmGLPJHD4",
+  authDomain: "pretest-596c5.firebaseapp.com",
+  projectId: "pretest-596c5",
+  storageBucket: "pretest-596c5.firebasestorage.app",
+  messagingSenderId: "885058490748",
+  appId: "1:885058490748:web:484a62610473dc9b7954f9",
+  measurementId: "G-5HLDFLZVCS"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const ATTEMPTS_COLLECTION = 'dengue_pretest_attempts';
+
 const EXAM_SECONDS = 40*60;
 let answers = new Array(QUESTIONS.length).fill(null);
 let currentQ = 0;
@@ -668,7 +684,7 @@ let examStartTs = null;
 const PROGRESS_KEY = 'dengue_pretest_inprogress';
 
 /* ---------------- REGISTRO ---------------- */
-function startExam(){
+async function startExam(){
   const nombre = document.getElementById('f-nombre').value.trim();
   const dni = document.getElementById('f-dni').value.trim();
   const ocup = document.getElementById('f-ocupacion').value;
@@ -692,7 +708,23 @@ function startExam(){
   }
   if(!ok) return;
 
-  const previous = findAttemptByDni(dni);
+  const btn = document.getElementById('btn-start');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+
+  let previous;
+  try{
+    previous = await findAttemptByDni(dni);
+  }catch(e){
+    btn.disabled = false;
+    btn.textContent = originalText;
+    document.getElementById('err-dni').textContent = 'No se pudo conectar al servidor. Verifique su conexión a internet e intente de nuevo.';
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = originalText;
+
   if(previous){
     showLockedScreen(previous);
     return;
@@ -732,7 +764,7 @@ function saveProgress(){
 function clearProgress(){
   localStorage.removeItem(PROGRESS_KEY);
 }
-function tryResumeProgress(){
+async function tryResumeProgress(){
   let raw;
   try{ raw = localStorage.getItem(PROGRESS_KEY); }catch(e){ raw = null; }
   if(!raw) return;
@@ -741,7 +773,9 @@ function tryResumeProgress(){
   if(!state || !state.dni || !state.examStartTs) { clearProgress(); return; }
 
   // Si ese DNI ya tiene un intento finalizado, el progreso guardado quedó obsoleto.
-  if(findAttemptByDni(state.dni)){ clearProgress(); return; }
+  let already;
+  try{ already = await findAttemptByDni(state.dni); }catch(e){ already = null; }
+  if(already){ clearProgress(); return; }
 
   participant = {nombre: state.nombre, dni: state.dni, ocup: state.ocup};
   answers = state.answers && state.answers.length === QUESTIONS.length ? state.answers : new Array(QUESTIONS.length).fill(null);
@@ -768,10 +802,12 @@ function tryResumeProgress(){
   }
 }
 
-function findAttemptByDni(dni){
-  let all = [];
-  try{ all = JSON.parse(localStorage.getItem('dengue_pretest_attempts')||'[]'); }catch(e){ all=[]; }
-  return all.find(r => r.dni === dni) || null;
+/* Consulta Firestore: ¿este DNI ya tiene un intento registrado? */
+async function findAttemptByDni(dni){
+  const snap = await db.collection(ATTEMPTS_COLLECTION).where('dni','==',dni).limit(1).get();
+  if(snap.empty) return null;
+  const doc = snap.docs[0];
+  return { id: doc.id, ...doc.data() };
 }
 
 function showLockedScreen(record){
@@ -889,7 +925,7 @@ function prevQ(){
 }
 
 /* ---------------- FINALIZAR / RESULTADOS ---------------- */
-function finishExam(byTimeout){
+async function finishExam(byTimeout){
   if(submitted) return;
   submitted = true;
   clearInterval(timerId);
@@ -939,12 +975,12 @@ function finishExam(byTimeout){
     review.appendChild(div);
   });
 
-  saveAttempt(correct, usedSeconds, byTimeout);
+  await saveAttempt(correct, usedSeconds, byTimeout);
   clearProgress();
 }
 
-/* ---------------- PERSISTENCIA LOCAL + EXPORT ---------------- */
-function saveAttempt(correct, usedSeconds, byTimeout){
+/* ---------------- GUARDADO EN FIRESTORE + EXPORT ---------------- */
+async function saveAttempt(correct, usedSeconds, byTimeout){
   const record = {
     fecha: new Date().toLocaleString('es-PE'),
     nombre: participant.nombre,
@@ -953,12 +989,14 @@ function saveAttempt(correct, usedSeconds, byTimeout){
     puntaje: correct,
     total: QUESTIONS.length,
     tiempoSeg: usedSeconds,
-    tiempoAgotado: byTimeout ? 'Sí':'No'
+    tiempoAgotado: byTimeout ? 'Sí':'No',
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
-  let all = [];
-  try{ all = JSON.parse(localStorage.getItem('dengue_pretest_attempts')||'[]'); }catch(e){ all=[]; }
-  all.push(record);
-  localStorage.setItem('dengue_pretest_attempts', JSON.stringify(all));
+  try{
+    await db.collection(ATTEMPTS_COLLECTION).add(record);
+  }catch(e){
+    console.error('No se pudo guardar el intento en Firestore:', e);
+  }
 }
 
 /* ---------------- PANEL ADMINISTRADOR ---------------- */
@@ -981,16 +1019,31 @@ function checkAdminLogin(){
     document.getElementById('admin-err').textContent = 'Clave incorrecta.';
   }
 }
-function getAllAttempts(){
-  try{ return JSON.parse(localStorage.getItem('dengue_pretest_attempts')||'[]'); }catch(e){ return []; }
+async function getAllAttempts(){
+  const snap = await db.collection(ATTEMPTS_COLLECTION).orderBy('timestamp','desc').get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
-function openAdminPanel(){
-  const all = getAllAttempts();
-  document.getElementById('admin-count').textContent = `${all.length} registro${all.length===1?'':'s'}`;
+let lastAdminData = [];
+async function openAdminPanel(){
+  document.getElementById('admin-panel').classList.remove('hidden');
+  document.getElementById('admin-count').textContent = 'Cargando...';
   const wrap = document.getElementById('admin-table-wrap');
+  wrap.innerHTML = '<div class="admin-empty">Cargando participantes...</div>';
+
+  let all;
+  try{
+    all = await getAllAttempts();
+  }catch(e){
+    console.error(e);
+    document.getElementById('admin-count').textContent = '';
+    wrap.innerHTML = '<div class="admin-empty">No se pudo conectar al servidor. Verifique su conexión a internet.</div>';
+    return;
+  }
+  lastAdminData = all;
+  document.getElementById('admin-count').textContent = `${all.length} registro${all.length===1?'':'s'}`;
 
   if(all.length===0){
-    wrap.innerHTML = '<div class="admin-empty">Aún no hay participantes registrados en este dispositivo.</div>';
+    wrap.innerHTML = '<div class="admin-empty">Aún no hay participantes registrados.</div>';
   } else {
     let html = '<table class="admin-table"><thead><tr>' +
       '<th>Fecha</th><th>Apellidos y nombres</th><th>DNI</th><th>Ocupación</th><th>Puntaje</th><th>%</th><th>Tiempo</th><th>Agotado</th>' +
@@ -1004,15 +1057,14 @@ function openAdminPanel(){
     html += '</tbody></table>';
     wrap.innerHTML = html;
   }
-  document.getElementById('admin-panel').classList.remove('hidden');
 }
 function closeAdminPanel(){
   document.getElementById('admin-panel').classList.add('hidden');
 }
 
 function downloadExcel(){
-  const all = getAllAttempts();
-  if(all.length===0) return;
+  const all = lastAdminData;
+  if(!all || all.length===0) return;
 
   const rows = all.map(r=>({
     'Fecha': r.fecha,
