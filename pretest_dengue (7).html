@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pretest · Diagnóstico y Manejo Clínico del Dengue</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --blue-900:#0a3d7a;
+    --blue-700:#0f5fb0;
+    --blue-500:#1878d8;
+    --blue-100:#eaf3fc;
+    --red-600:#d81324;
+    --ink:#122236;
+    --gray-500:#5c6b7a;
+    --gray-200:#dde5ee;
+    --paper:#ffffff;
+    --bg:#f2f6fb;
+    --ok:#1a8f5e;
+    --warn:#c98a00;
+    --font-display:'Segoe UI Semibold','Segoe UI',Arial,sans-serif;
+    --font-body:'Segoe UI',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    background:
+      radial-gradient(1200px 500px at 50% -10%, #ffffff 0%, var(--bg) 55%);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .topbar{
+    position:relative;
+    background:var(--paper);
+    border-bottom:1px solid var(--gray-200);
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:var(--font-display);
+    color:var(--blue-700);
+    font-size:20px;
+    font-weight:700;
+  }
+  .brand .dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--red-600);
+    box-shadow:0 0 0 3px var(--blue-100);
+  }
+  .brand small{
+    display:block;
+    font-family:var(--font-body);
+    font-weight:400;
+    font-size:11px;
+    color:var(--gray-500);
+    letter-spacing:.2px;
+  }
+  .course-tag{
+    text-align:right;
+  }
+  .course-tag .curso{
+    color:var(--red-600);
+    font-weight:700;
+    letter-spacing:2px;
+    font-size:12px;
+  }
+  .course-tag .titulo{
+    color:var(--blue-700);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    line-height:1.2;
+  }
+
+  .steps{
+    max-width:760px;
+    margin:26px auto 0;
+    display:flex;
+    align-items:center;
+    padding:0 20px;
+  }
+  .step{
+    flex:1;
+    text-align:center;
+    position:relative;
+    font-size:12px;
+    color:var(--gray-500);
+    font-weight:600;
+    letter-spacing:.3px;
+  }
+  .step .circ{
+    width:28px;height:28px;border-radius:50%;
+    background:var(--paper);
+    border:2px solid var(--gray-200);
+    color:var(--gray-500);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 6px;
+    font-weight:700;
+    font-size:13px;
+    transition:.25s;
+  }
+  .step.active .circ{border-color:var(--blue-700);color:var(--blue-700);background:var(--blue-100);}
+  .step.done .circ{border-color:var(--ok);background:var(--ok);color:#fff;}
+  .step.active{color:var(--blue-700);}
+  .step:not(:last-child)::after{
+    content:'';
+    position:absolute;
+    top:14px;left:58%;right:-42%;
+    height:2px;
+    background:var(--gray-200);
+    z-index:-1;
+  }
+  .step.done:not(:last-child)::after{background:var(--ok);}
+
+  .wrap{
+    max-width:760px;
+    margin:26px auto 60px;
+    padding:0 20px;
+  }
+  .card{
+    background:var(--paper);
+    border:1px solid var(--gray-200);
+    border-radius:14px;
+    box-shadow:0 8px 30px rgba(10,61,122,.06);
+    padding:32px;
+  }
+  .card h1{
+    font-family:var(--font-display);
+    color:var(--blue-900);
+    font-size:22px;
+    margin:0 0 4px;
+  }
+  .card .sub{
+    color:var(--gray-500);
+    font-size:13.5px;
+    margin-bottom:24px;
+  }
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    margin:16px 0 6px;
+  }
+  input[type=text], select{
+    width:100%;
+    padding:12px 14px;
+    border:1.5px solid var(--gray-200);
+    border-radius:8px;
+    font-size:14.5px;
+    font-family:var(--font-body);
+    color:var(--ink);
+    background:#fbfdff;
+    transition:.15s;
+  }
+  input[type=text]:focus, select:focus{
+    outline:none;
+    border-color:var(--blue-500);
+    background:#fff;
+    box-shadow:0 0 0 3px var(--blue-100);
+  }
+  .hint{font-size:11.5px;color:var(--gray-500);margin-top:4px;}
+  .error-msg{font-size:12px;color:var(--red-600);margin-top:4px;min-height:14px;font-weight:600;}
+
+  .btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font-family:var(--font-body);
+    font-weight:700;
+    font-size:14.5px;
+    padding:13px 26px;
+    border-radius:9px;
+    transition:.15s;
+  }
+  .btn-primary{
+    background:var(--blue-700);
+    color:#fff;
+    box-shadow:0 4px 14px rgba(15,95,176,.32);
+  }
+  .btn-primary:hover{background:var(--blue-900);}
+  .btn-primary:disabled{background:#a9c3de;cursor:not-allowed;box-shadow:none;}
+  .btn-ghost{
+    background:transparent;
+    color:var(--blue-700);
+    border:1.5px solid var(--blue-100);
+  }
+  .btn-ghost:hover{background:var(--blue-100);}
+  .actions{margin-top:26px;display:flex;justify-content:flex-end;gap:10px;}
+
+  /* ---- EXAM ---- */
+  .exam-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .who{
+    font-size:12.5px;
+    color:var(--gray-500);
+  }
+  .who b{color:var(--ink);}
+  .timer{
+    font-family:'Consolas',monospace;
+    font-size:20px;
+    font-weight:700;
+    color:var(--blue-700);
+    background:var(--blue-100);
+    padding:7px 16px;
+    border-radius:8px;
+    letter-spacing:1px;
+    border:1.5px solid #cfe3f7;
+  }
+  .timer.low{
+    color:#fff;
+    background:var(--red-600);
+    border-color:var(--red-600);
+    animation:pulse 1s infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.72;}}
+
+  .progressbar{
+    height:6px;
+    background:var(--gray-200);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:26px;
+  }
+  .progressbar > div{
+    height:100%;
+    background:linear-gradient(90deg,var(--blue-500),var(--blue-700));
+    width:0%;
+    transition:width .3s;
+  }
+
+  .qcounter{
+    font-size:12px;
+    font-weight:700;
+    color:var(--red-600);
+    letter-spacing:1px;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .qtext{
+    font-size:17px;
+    font-weight:600;
+    line-height:1.4;
+    margin-bottom:18px;
+    color:var(--ink);
+  }
+  .opt{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:13px 16px;
+    border:1.5px solid var(--gray-200);
+    border-radius:9px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition:.15s;
+    font-size:14px;
+  }
+  .opt:hover{border-color:var(--blue-500);background:var(--blue-100);}
+  .opt.selected{border-color:var(--blue-700);background:var(--blue-100);font-weight:600;}
+  .opt .letter{
+    width:26px;height:26px;border-radius:50%;
+    border:1.5px solid var(--gray-200);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:var(--gray-500);
+    flex-shrink:0;
+  }
+  .opt.selected .letter{background:var(--blue-700);border-color:var(--blue-700);color:#fff;}
+
+  .navrow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:24px;
+  }
+  .dots{display:flex;gap:6px;flex-wrap:wrap;max-width:340px;}
+  .dots span{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--gray-200);
+    display:inline-block;
+  }
+  .dots span.answered{background:var(--blue-500);}
+  .dots span.current{background:var(--red-600);transform:scale(1.3);}
+
+  /* ---- RESULTS ---- */
+  .score-hero{
+    text-align:center;
+    padding:10px 0 20px;
+  }
+  .score-num{
+    font-family:var(--font-display);
+    font-size:56px;
+    font-weight:800;
+    color:var(--blue-700);
+    line-height:1;
+  }
+  .score-num small{font-size:20px;color:var(--gray-500);font-weight:600;}
+  .score-label{
+    margin-top:6px;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--gray-500);
+  }
+  .badge{
+    display:inline-block;
+    margin-top:14px;
+    padding:6px 16px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:700;
+  }
+  .badge.ok{background:#e3f7ee;color:var(--ok);}
+  .badge.warn{background:#fdf2e0;color:var(--warn);}
+
+  .summary-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin:22px 0;
+  }
+  .summary-box{
+    background:#fbfdff;
+    border:1.5px solid var(--gray-200);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .summary-box .k{font-size:11.5px;color:var(--gray-500);font-weight:600;text-transform:uppercase;}
+  .summary-box .v{font-size:15px;font-weight:700;color:var(--ink);margin-top:3px;}
+
+  .review-item{
+    border-top:1px solid var(--gray-200);
+    padding:14px 0;
+    font-size:13.5px;
+  }
+  .review-item .q{font-weight:600;margin-bottom:6px;}
+  .review-item .a{color:var(--gray-500);}
+  .review-item .a.correct{color:var(--ok);font-weight:600;}
+  .review-item .a.wrong{color:var(--red-600);font-weight:600;}
+
+  .hidden{display:none !important;}
+  footer{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--gray-500);
+    padding-bottom:14px;
+  }
+  .admin-link{
+    text-align:center;
+    padding-bottom:30px;
+  }
+  .admin-link a{
+    font-size:11.5px;
+    color:var(--gray-500);
+    text-decoration:underline;
+    cursor:pointer;
+  }
+  .admin-link-top{
+    position:fixed;
+    top:50%;
+    right:0;
+    transform:translateY(-50%);
+    background:var(--blue-700);
+    color:#fff;
+    padding:12px 7px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1.5px;
+    border-radius:8px 0 0 8px;
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    cursor:pointer;
+    box-shadow:-3px 0 12px rgba(10,61,122,.28);
+    z-index:30;
+    user-select:none;
+    transition:.15s;
+  }
+  .admin-link-top:hover{background:var(--blue-900);padding-right:11px;}
+  .lock-icon{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--blue-100);
+    color:var(--blue-700);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;
+    margin:0 auto 16px;
+  }
+
+  /* ---- ADMIN ---- */
+  .admin-overlay{
+    position:fixed;inset:0;
+    background:rgba(10,25,45,.55);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .admin-modal{
+    background:var(--paper);
+    border-radius:14px;
+    padding:28px;
+    width:100%;max-width:340px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+  }
+  .admin-modal h2{margin:0 0 4px;font-size:17px;color:var(--blue-900);font-family:var(--font-display);}
+  .admin-modal .sub{font-size:12.5px;color:var(--gray-500);margin-bottom:16px;}
+  .admin-panel{
+    position:fixed;inset:0;
+    background:var(--bg);
+    z-index:40;
+    overflow-y:auto;
+    padding:24px;
+  }
+  .admin-panel .inner{max-width:960px;margin:0 auto;}
+  .admin-head{
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:12px;margin-bottom:18px;
+  }
+  .admin-head h1{font-family:var(--font-display);color:var(--blue-900);font-size:20px;margin:0;}
+  .admin-head .count{font-size:12.5px;color:var(--gray-500);}
+  table.admin-table{
+    width:100%;border-collapse:collapse;
+    background:var(--paper);
+    border-radius:10px;overflow:hidden;
+    box-shadow:0 4px 18px rgba(10,61,122,.06);
+    font-size:12.5px;
+  }
+  table.admin-table th{
+    background:var(--blue-900);color:#fff;
+    text-align:left;padding:10px 12px;font-weight:700;
+    white-space:nowrap;
+  }
+  table.admin-table td{
+    padding:9px 12px;border-top:1px solid var(--gray-200);
+    white-space:nowrap;
+  }
+  table.admin-table tr:nth-child(even) td{background:#fbfdff;}
+  .admin-empty{
+    text-align:center;color:var(--gray-500);
+    padding:40px 0;font-size:13.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="admin-link-top" onclick="openAdminLogin()">ADMIN</div>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="dot"></div>
+    <div>
+      EsSalud
+      <small>Red Asistencial Madre de Dios</small>
+    </div>
+  </div>
+  <div class="course-tag">
+    <div class="curso">CURSO</div>
+    <div class="titulo">Diagnóstico y Manejo Clínico<br>del Dengue</div>
+  </div>
+</div>
+
+<div class="steps">
+  <div class="step active" id="step1">
+    <div class="circ">1</div>
+    Registro
+  </div>
+  <div class="step" id="step2">
+    <div class="circ">2</div>
+    Pretest
+  </div>
+  <div class="step" id="step3">
+    <div class="circ">3</div>
+    Resultado
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- PANTALLA 1: REGISTRO -->
+  <div class="card" id="screen-register">
+    <h1>Datos del participante</h1>
+    <div class="sub">Complete sus datos para iniciar el pretest del curso.</div>
+
+    <label for="f-nombre">Nombres y apellidos</label>
+    <input type="text" id="f-nombre" placeholder="Ej: María Fernanda Quispe Ttito">
+    <div class="error-msg" id="err-nombre"></div>
+
+    <label for="f-dni">DNI</label>
+    <input type="text" id="f-dni" maxlength="8" placeholder="8 dígitos" inputmode="numeric">
+    <div class="error-msg" id="err-dni"></div>
+
+    <label for="f-ocupacion">Ocupación</label>
+    <select id="f-ocupacion">
+      <option value="">Seleccione...</option>
+      <option>Médico(a)</option>
+      <option>Enfermero(a)</option>
+      <option>Obstetra</option>
+      <option>Técnico(a) de enfermería</option>
+      <option>Biólogo(a) / Laboratorista</option>
+      <option>Interno(a) de salud</option>
+      <option>Personal administrativo</option>
+      <option>Otro</option>
+    </select>
+    <div class="error-msg" id="err-ocupacion"></div>
+
+    <div class="hint">El pretest tiene 15 preguntas y una duración máxima de 20 minutos. Una vez iniciado, el cronómetro no se detiene.</div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="startExam()">Iniciar pretest</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA 2: EXAMEN -->
+  <div class="card hidden" id="screen-exam">
+    <div class="exam-head">
+      <div class="who">Participante: <b id="who-name">-</b> · DNI <b id="who-dni">-</b></div>
+      <div class="timer" id="timer">20:00</div>
+    </div>
+    <div class="progressbar"><div id="progress-fill"></div></div>
+
+    <div class="qcounter">Pregunta <span id="qidx">1</span> de <span id="qtotal">15</span></div>
+    <div class="qtext" id="qtext">...</div>
+    <div id="options"></div>
+
+    <div class="navrow">
+      <button class="btn btn-ghost" id="btn-prev" onclick="prevQ()">Anterior</button>
+      <div class="dots" id="dots"></div>
+      <button class="btn btn-primary" id="btn-next" onclick="nextQ()">Siguiente</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA 3: RESULTADOS -->
+  <div class="card hidden" id="screen-results">
+    <div class="score-hero">
+      <div class="score-num" id="score-num">0<small>/15</small></div>
+      <div class="score-label">Puntaje obtenido</div>
+      <div class="badge" id="score-badge">-</div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-box"><div class="k">Participante</div><div class="v" id="res-name">-</div></div>
+      <div class="summary-box"><div class="k">DNI</div><div class="v" id="res-dni">-</div></div>
+      <div class="summary-box"><div class="k">Ocupación</div><div class="v" id="res-ocup">-</div></div>
+      <div class="summary-box"><div class="k">Tiempo utilizado</div><div class="v" id="res-time">-</div></div>
+    </div>
+
+    <div id="review"></div>
+
+    <div class="hint" style="text-align:center;margin-top:10px;">
+      Sus resultados han sido registrados. Puede cerrar esta ventana.
+    </div>
+  </div>
+
+  <!-- PANTALLA 4: DNI YA REGISTRADO (BLOQUEO) -->
+  <div class="card hidden" id="screen-locked">
+    <div class="lock-icon">&#128274;</div>
+    <h1 style="text-align:center;">Este DNI ya rindió el pretest</h1>
+    <div class="sub" style="text-align:center;">No es posible volver a dar el examen con el mismo número de documento.</div>
+    <div class="summary-grid">
+      <div class="summary-box"><div class="k">Participante</div><div class="v" id="lk-name">-</div></div>
+      <div class="summary-box"><div class="k">DNI</div><div class="v" id="lk-dni">-</div></div>
+      <div class="summary-box"><div class="k">Puntaje registrado</div><div class="v" id="lk-score">-</div></div>
+      <div class="summary-box"><div class="k">Fecha de rendición</div><div class="v" id="lk-date">-</div></div>
+    </div>
+    <div class="hint" style="text-align:center;">Si considera que esto es un error, comuníquese con el equipo organizador del curso.</div>
+  </div>
+
+  <footer>EsSalud — Red Asistencial Madre de Dios · W&amp;M Consultores del Perú</footer>
+  <div class="admin-link"><a onclick="openAdminLogin()">Acceso administrador</a></div>
+</div>
+
+<!-- LOGIN ADMIN -->
+<div class="admin-overlay hidden" id="admin-login">
+  <div class="admin-modal">
+    <h2>Panel de administrador</h2>
+    <div class="sub">Ingrese la clave para ver y descargar los resultados de todos los participantes.</div>
+    <input type="text" id="admin-pass" placeholder="Clave de acceso" style="-webkit-text-security:disc;">
+    <div class="error-msg" id="admin-err"></div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="closeAdminLogin()">Cancelar</button>
+      <button class="btn btn-primary" onclick="checkAdminLogin()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL ADMIN -->
+<div class="admin-panel hidden" id="admin-panel">
+  <div class="inner">
+    <div class="admin-head">
+      <h1>Resultados · Todos los participantes</h1>
+      <div class="count" id="admin-count">0 registros</div>
+    </div>
+    <div class="actions" style="justify-content:flex-start;margin-top:0;margin-bottom:16px;">
+      <button class="btn btn-primary" onclick="downloadExcel()">Descargar Excel (.xlsx)</button>
+      <button class="btn btn-ghost" onclick="closeAdminPanel()">Cerrar panel</button>
+    </div>
+    <div id="admin-table-wrap"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- BANCO DE PREGUNTAS ---------------- */
+const QUESTIONS = [
+  {q:"¿Cuál es el vector principal de transmisión del dengue en el Perú?",
+   o:["Anopheles sp.","Aedes aegypti","Culex sp.","Lutzomyia sp."], a:1},
+  {q:"Según la clasificación de la OMS 2009, el dengue se clasifica en:",
+   o:["Dengue clásico y dengue hemorrágico","Dengue sin signos de alarma, dengue con signos de alarma y dengue grave","Dengue leve y dengue severo únicamente","Fiebre dengue tipo I, II, III y IV"], a:1},
+  {q:"¿Cuál de los siguientes NO es un signo de alarma en dengue?",
+   o:["Dolor abdominal intenso y continuo","Vómitos persistentes","Fiebre de bajo grado intermitente","Sangrado de mucosas"], a:2},
+  {q:"La prueba de laboratorio útil para el diagnóstico temprano de dengue (días 1-5) es:",
+   o:["IgG antidengue","Antígeno NS1","Cultivo bacteriano","Proteína C reactiva"], a:1},
+  {q:"La fase crítica del dengue generalmente ocurre:",
+   o:["Los primeros 2 días de fiebre","Alrededor de la caída de la fiebre (defervescencia), días 3-7","Después del día 10 de enfermedad","Nunca ocurre en dengue sin signos de alarma"], a:1},
+  {q:"Un criterio de dengue grave es:",
+   o:["Cefalea leve","Extravasación grave de plasma que lleva a shock","Mialgias","Exantema cutáneo"], a:1},
+  {q:"La prueba del torniquete se considera positiva cuando aparecen:",
+   o:["Menos de 5 petequias en 1 pulgada cuadrada","10 o más petequias en 1 pulgada cuadrada","Ausencia total de petequias","Solo eritema sin petequias"], a:1},
+  {q:"El manejo inicial de un paciente con dengue sin signos de alarma (Grupo A) incluye:",
+   o:["Hidratación oral abundante y control ambulatorio","Hospitalización inmediata en UCI","Transfusión de plaquetas profiláctica","Uso rutinario de AINES para la fiebre"], a:0},
+  {q:"¿Qué medicamento está CONTRAINDICADO para el manejo de la fiebre en pacientes con dengue?",
+   o:["Paracetamol","Ácido acetilsalicílico (aspirina)","Medios físicos","Ninguno de los anteriores"], a:1},
+  {q:"El hematocrito elevado junto con caída rápida de plaquetas sugiere:",
+   o:["Mejoría clínica","Extravasación de plasma (fase crítica)","Anemia ferropénica","Infección bacteriana concomitante sin relación"], a:1},
+  {q:"Un paciente con dengue y signos de alarma debe ser manejado en:",
+   o:["Domicilio sin seguimiento","Observación en establecimiento de salud con capacidad de manejo, con hidratación EV","Solo reposo, sin evaluación","Alta inmediata tras la primera consulta"], a:1},
+  {q:"¿Cuál de los siguientes es un criterio de dengue grave?",
+   o:["Fiebre de 38°C por 2 días","Sangrado grave, shock por extravasación de plasma o compromiso importante de órganos","Cefalea retroorbitaria","Exantema pruriginoso"], a:1},
+  {q:"La fase de convalecencia del dengue se caracteriza por:",
+   o:["Persistencia del shock","Reabsorción del líquido extravasado y estabilización clínica","Aparición de signos de alarma","Inicio de la fiebre"], a:1},
+  {q:"El diagnóstico serológico por IgM antidengue suele ser positivo a partir de:",
+   o:["El primer día de fiebre","Aproximadamente el día 4-5 de la enfermedad","Solo en la fase de convalecencia tardía (después de 3 meses)","Nunca es útil para dengue"], a:1},
+  {q:"Una estrategia clave para la prevención del dengue a nivel comunitario es:",
+   o:["Uso de antibióticos profilácticos masivos","Eliminación de criaderos del vector y control ambiental","Vacunación obligatoria de toda la población sin excepción","Aislamiento respiratorio de los pacientes"], a:1},
+  {q:"En el ciclo de transmisión del dengue, ¿qué factor ambiental influye directamente en la duración del Periodo de Incubación Extrínseco (PEI) dentro del zancudo?",
+   o:["La disponibilidad de criaderos de agua estancada limpia.","La densidad poblacional humana en zonas urbanas críticas.","La altitud geográfica, limitando la replicación por encima de los msnm.","La temperatura ambiente, acelerando el proceso entre 25 °C y 32 °C."], a:3},
+  {q:"¿Cuál es el mecanismo fisiopatológico clave por el cual la proteína NS1 contribuye a la gravedad del dengue?",
+   o:["Actúa como una toxina viral que altera el glucocálix endotelial.","Bloquea la entrada del virus en los macrófagos tisulares.","Inhibe directamente la producción de plaquetas en la médula ósea.","Neutraliza la respuesta de los linfocitos T de memoria."], a:0},
+  {q:"¿Cuántos serotipos antigénicamente distintos del virus del dengue (DENV) se han identificado?",
+   o:["Dos (DENV-1 y DENV-2)","Tres (DENV-1, DENV-2 y DENV-3)","Cuatro (DENV-1, DENV-2, DENV-3 y DENV-4)","Cinco, incluyendo un serotipo asociado a Zika"], a:2},
+  {q:"Respecto a la infección secundaria por dengue con un serotipo diferente al de la primoinfección, es correcto afirmar que:",
+   o:["Confiere inmunidad cruzada permanente y protege contra dengue grave","Aumenta el riesgo de dengue grave por el fenómeno de facilitación inmunológica (ADE)","No representa ningún riesgo adicional para el paciente","Solo ocurre en pacientes menores de 5 años"], a:1},
+  {q:"Para el alta de un paciente hospitalizado por dengue, se debe verificar, entre otros criterios:",
+   o:["Ausencia de fiebre por al menos 24-48 horas sin uso de antipiréticos","Persistencia de dolor abdominal intenso","Hematocrito en ascenso progresivo","Recuento de plaquetas en descenso continuo"], a:0},
+];
+
+const EXAM_SECONDS = 20*60;
+let answers = new Array(QUESTIONS.length).fill(null);
+let currentQ = 0;
+let timeLeft = EXAM_SECONDS;
+let timerId = null;
+let participant = {};
+let submitted = false;
+let examStartTs = null;
+const PROGRESS_KEY = 'dengue_pretest_inprogress';
+
+/* ---------------- REGISTRO ---------------- */
+function startExam(){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const dni = document.getElementById('f-dni').value.trim();
+  const ocup = document.getElementById('f-ocupacion').value;
+
+  let ok = true;
+  document.getElementById('err-nombre').textContent='';
+  document.getElementById('err-dni').textContent='';
+  document.getElementById('err-ocupacion').textContent='';
+
+  if(nombre.length < 4){
+    document.getElementById('err-nombre').textContent='Ingrese su nombre completo.';
+    ok=false;
+  }
+  if(!/^\d{8}$/.test(dni)){
+    document.getElementById('err-dni').textContent='El DNI debe tener 8 dígitos numéricos.';
+    ok=false;
+  }
+  if(!ocup){
+    document.getElementById('err-ocupacion').textContent='Seleccione su ocupación.';
+    ok=false;
+  }
+  if(!ok) return;
+
+  const previous = findAttemptByDni(dni);
+  if(previous){
+    showLockedScreen(previous);
+    return;
+  }
+
+  participant = {nombre, dni, ocup};
+  answers = new Array(QUESTIONS.length).fill(null);
+  currentQ = 0;
+  submitted = false;
+  examStartTs = Date.now();
+
+  document.getElementById('who-name').textContent = nombre;
+  document.getElementById('who-dni').textContent = dni;
+
+  document.getElementById('screen-register').classList.add('hidden');
+  document.getElementById('screen-exam').classList.remove('hidden');
+  markStep(2);
+
+  buildDots();
+  saveProgress();
+  renderQuestion();
+  startTimer();
+}
+
+/* ---------------- GUARDADO AUTOMÁTICO DE PROGRESO ---------------- */
+function saveProgress(){
+  const state = {
+    nombre: participant.nombre,
+    dni: participant.dni,
+    ocup: participant.ocup,
+    answers: answers,
+    currentQ: currentQ,
+    examStartTs: examStartTs
+  };
+  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch(e){}
+}
+function clearProgress(){
+  localStorage.removeItem(PROGRESS_KEY);
+}
+function tryResumeProgress(){
+  let raw;
+  try{ raw = localStorage.getItem(PROGRESS_KEY); }catch(e){ raw = null; }
+  if(!raw) return;
+  let state;
+  try{ state = JSON.parse(raw); }catch(e){ clearProgress(); return; }
+  if(!state || !state.dni || !state.examStartTs) { clearProgress(); return; }
+
+  // Si ese DNI ya tiene un intento finalizado, el progreso guardado quedó obsoleto.
+  if(findAttemptByDni(state.dni)){ clearProgress(); return; }
+
+  participant = {nombre: state.nombre, dni: state.dni, ocup: state.ocup};
+  answers = state.answers && state.answers.length === QUESTIONS.length ? state.answers : new Array(QUESTIONS.length).fill(null);
+  currentQ = Math.min(state.currentQ || 0, QUESTIONS.length-1);
+  examStartTs = state.examStartTs;
+  submitted = false;
+
+  document.getElementById('who-name').textContent = participant.nombre;
+  document.getElementById('who-dni').textContent = participant.dni;
+  document.getElementById('screen-register').classList.add('hidden');
+  document.getElementById('screen-exam').classList.remove('hidden');
+  markStep(2);
+  buildDots();
+  renderQuestion();
+
+  const elapsed = Math.floor((Date.now() - examStartTs)/1000);
+  timeLeft = EXAM_SECONDS - elapsed;
+  if(timeLeft <= 0){
+    timeLeft = 0;
+    updateTimerDisplay();
+    finishExam(true);
+  } else {
+    startTimer();
+  }
+}
+
+function findAttemptByDni(dni){
+  let all = [];
+  try{ all = JSON.parse(localStorage.getItem('dengue_pretest_attempts')||'[]'); }catch(e){ all=[]; }
+  return all.find(r => r.dni === dni) || null;
+}
+
+function showLockedScreen(record){
+  document.getElementById('screen-register').classList.add('hidden');
+  document.getElementById('screen-locked').classList.remove('hidden');
+  document.getElementById('lk-name').textContent = record.nombre;
+  document.getElementById('lk-dni').textContent = record.dni;
+  document.getElementById('lk-score').textContent = `${record.puntaje} / ${record.total}`;
+  document.getElementById('lk-date').textContent = record.fecha;
+}
+
+/* Evita que el botón "atrás" del navegador regrese al examen ya enviado */
+history.pushState({locked:true}, '');
+window.addEventListener('popstate', function(){
+  history.pushState({locked:true}, '');
+});
+window.addEventListener('beforeunload', function(e){
+  if(!submitted && currentQ !== undefined && document.getElementById('screen-exam') && !document.getElementById('screen-exam').classList.contains('hidden')){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+function markStep(n){
+  for(let i=1;i<=3;i++){
+    const el = document.getElementById('step'+i);
+    el.classList.remove('active','done');
+    if(i<n) el.classList.add('done');
+    if(i===n) el.classList.add('active');
+  }
+}
+
+/* ---------------- TEMPORIZADOR ---------------- */
+function startTimer(){
+  updateTimerDisplay();
+  if(timerId) clearInterval(timerId);
+  timerId = setInterval(()=>{
+    const elapsed = Math.floor((Date.now() - examStartTs)/1000);
+    timeLeft = EXAM_SECONDS - elapsed;
+    if(timeLeft<=0){
+      timeLeft = 0;
+      updateTimerDisplay();
+      clearInterval(timerId);
+      finishExam(true);
+      return;
+    }
+    updateTimerDisplay();
+  },1000);
+}
+function updateTimerDisplay(){
+  const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+  const s = (timeLeft%60).toString().padStart(2,'0');
+  const el = document.getElementById('timer');
+  el.textContent = `${m}:${s}`;
+  el.classList.toggle('low', timeLeft<=120);
+}
+
+/* ---------------- PREGUNTAS ---------------- */
+function buildDots(){
+  const dots = document.getElementById('dots');
+  dots.innerHTML='';
+  QUESTIONS.forEach((_,i)=>{
+    const s = document.createElement('span');
+    s.id = 'dot'+i;
+    dots.appendChild(s);
+  });
+}
+function renderQuestion(){
+  const item = QUESTIONS[currentQ];
+  document.getElementById('qidx').textContent = currentQ+1;
+  document.getElementById('qtotal').textContent = QUESTIONS.length;
+  document.getElementById('qtext').textContent = item.q;
+
+  const optsWrap = document.getElementById('options');
+  optsWrap.innerHTML='';
+  const letters=['A','B','C','D'];
+  item.o.forEach((opt,i)=>{
+    const div = document.createElement('div');
+    div.className = 'opt' + (answers[currentQ]===i ? ' selected':'');
+    div.onclick = ()=>selectOption(i);
+    div.innerHTML = `<span class="letter">${letters[i]}</span><span>${opt}</span>`;
+    optsWrap.appendChild(div);
+  });
+
+  document.getElementById('progress-fill').style.width = ((currentQ+1)/QUESTIONS.length*100)+'%';
+  document.getElementById('btn-prev').style.visibility = currentQ===0 ? 'hidden':'visible';
+  document.getElementById('btn-next').textContent = currentQ===QUESTIONS.length-1 ? 'Finalizar pretest':'Siguiente';
+
+  QUESTIONS.forEach((_,i)=>{
+    const d = document.getElementById('dot'+i);
+    d.classList.toggle('answered', answers[i]!==null);
+    d.classList.toggle('current', i===currentQ);
+  });
+}
+function selectOption(i){
+  answers[currentQ]=i;
+  saveProgress();
+  renderQuestion();
+}
+function nextQ(){
+  if(currentQ < QUESTIONS.length-1){
+    currentQ++;
+    saveProgress();
+    renderQuestion();
+  } else {
+    finishExam(false);
+  }
+}
+function prevQ(){
+  if(currentQ>0){
+    currentQ--;
+    saveProgress();
+    renderQuestion();
+  }
+}
+
+/* ---------------- FINALIZAR / RESULTADOS ---------------- */
+function finishExam(byTimeout){
+  if(submitted) return;
+  submitted = true;
+  clearInterval(timerId);
+
+  let correct = 0;
+  QUESTIONS.forEach((item,i)=>{ if(answers[i]===item.a) correct++; });
+
+  const usedSeconds = EXAM_SECONDS - timeLeft;
+  const mm = Math.floor(usedSeconds/60).toString().padStart(2,'0');
+  const ss = (usedSeconds%60).toString().padStart(2,'0');
+
+  document.getElementById('screen-exam').classList.add('hidden');
+  document.getElementById('screen-results').classList.remove('hidden');
+  markStep(3);
+
+  document.getElementById('score-num').innerHTML = `${correct}<small>/${QUESTIONS.length}</small>`;
+  document.getElementById('res-name').textContent = participant.nombre;
+  document.getElementById('res-dni').textContent = participant.dni;
+  document.getElementById('res-ocup').textContent = participant.ocup;
+  document.getElementById('res-time').textContent = `${mm}:${ss}` + (byTimeout ? ' (tiempo agotado)':'');
+
+  const pct = correct/QUESTIONS.length*100;
+  const badge = document.getElementById('score-badge');
+  if(pct>=70){
+    badge.textContent = 'Nivel de conocimiento adecuado';
+    badge.className='badge ok';
+  } else {
+    badge.textContent = 'Requiere reforzamiento en el curso';
+    badge.className='badge warn';
+  }
+
+  const review = document.getElementById('review');
+  review.innerHTML='';
+  const letters=['A','B','C','D'];
+  QUESTIONS.forEach((item,i)=>{
+    const given = answers[i];
+    const isCorrect = given===item.a;
+    const div = document.createElement('div');
+    div.className='review-item';
+    div.innerHTML = `
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="a ${isCorrect?'correct':'wrong'}">
+        Su respuesta: ${given===null ? 'Sin responder' : letters[given]+') '+item.o[given]}
+      </div>
+      ${!isCorrect ? `<div class="a correct">Respuesta correcta: ${letters[item.a]}) ${item.o[item.a]}</div>` : ''}
+    `;
+    review.appendChild(div);
+  });
+
+  saveAttempt(correct, usedSeconds, byTimeout);
+  clearProgress();
+}
+
+/* ---------------- PERSISTENCIA LOCAL + EXPORT ---------------- */
+function saveAttempt(correct, usedSeconds, byTimeout){
+  const record = {
+    fecha: new Date().toLocaleString('es-PE'),
+    nombre: participant.nombre,
+    dni: participant.dni,
+    ocupacion: participant.ocup,
+    puntaje: correct,
+    total: QUESTIONS.length,
+    tiempoSeg: usedSeconds,
+    tiempoAgotado: byTimeout ? 'Sí':'No'
+  };
+  let all = [];
+  try{ all = JSON.parse(localStorage.getItem('dengue_pretest_attempts')||'[]'); }catch(e){ all=[]; }
+  all.push(record);
+  localStorage.setItem('dengue_pretest_attempts', JSON.stringify(all));
+}
+
+/* ---------------- PANEL ADMINISTRADOR ---------------- */
+const ADMIN_PASSWORD = "dengue2026"; // cámbiala aquí si lo deseas
+
+function openAdminLogin(){
+  document.getElementById('admin-pass').value='';
+  document.getElementById('admin-err').textContent='';
+  document.getElementById('admin-login').classList.remove('hidden');
+}
+function closeAdminLogin(){
+  document.getElementById('admin-login').classList.add('hidden');
+}
+function checkAdminLogin(){
+  const val = document.getElementById('admin-pass').value;
+  if(val === ADMIN_PASSWORD){
+    closeAdminLogin();
+    openAdminPanel();
+  } else {
+    document.getElementById('admin-err').textContent = 'Clave incorrecta.';
+  }
+}
+function getAllAttempts(){
+  try{ return JSON.parse(localStorage.getItem('dengue_pretest_attempts')||'[]'); }catch(e){ return []; }
+}
+function openAdminPanel(){
+  const all = getAllAttempts();
+  document.getElementById('admin-count').textContent = `${all.length} registro${all.length===1?'':'s'}`;
+  const wrap = document.getElementById('admin-table-wrap');
+
+  if(all.length===0){
+    wrap.innerHTML = '<div class="admin-empty">Aún no hay participantes registrados en este dispositivo.</div>';
+  } else {
+    let html = '<table class="admin-table"><thead><tr>' +
+      '<th>Fecha</th><th>Nombres y apellidos</th><th>DNI</th><th>Ocupación</th><th>Puntaje</th><th>%</th><th>Tiempo</th><th>Agotado</th>' +
+      '</tr></thead><tbody>';
+    all.forEach(r=>{
+      const mm = Math.floor(r.tiempoSeg/60).toString().padStart(2,'0');
+      const ss = (r.tiempoSeg%60).toString().padStart(2,'0');
+      const pct = Math.round(r.puntaje/r.total*100);
+      html += `<tr><td>${r.fecha}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.ocupacion}</td><td>${r.puntaje}/${r.total}</td><td>${pct}%</td><td>${mm}:${ss}</td><td>${r.tiempoAgotado}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+  document.getElementById('admin-panel').classList.remove('hidden');
+}
+function closeAdminPanel(){
+  document.getElementById('admin-panel').classList.add('hidden');
+}
+
+function downloadExcel(){
+  const all = getAllAttempts();
+  if(all.length===0) return;
+
+  const rows = all.map(r=>({
+    'Fecha': r.fecha,
+    'Nombres y apellidos': r.nombre,
+    'DNI': r.dni,
+    'Ocupación': r.ocupacion,
+    'Puntaje': r.puntaje,
+    'Total preguntas': r.total,
+    'Porcentaje': Math.round(r.puntaje/r.total*100)+'%',
+    'Tiempo utilizado (seg)': r.tiempoSeg,
+    'Tiempo agotado': r.tiempoAgotado
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:18},{wch:30},{wch:10},{wch:22},{wch:9},{wch:14},{wch:11},{wch:20},{wch:13}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Resultados');
+  XLSX.writeFile(wb, 'resultados_pretest_dengue.xlsx');
+}
+
+/* ---------------- INICIO: reanudar examen en curso si existe ---------------- */
+tryResumeProgress();
+</script>
+</body>
+</html>
