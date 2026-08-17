@@ -495,8 +495,8 @@
     <h1>Datos del participante</h1>
     <div class="sub">Complete sus datos para iniciar el pretest del curso.</div>
 
-    <label for="f-nombre">Nombres y apellidos</label>
-    <input type="text" id="f-nombre" placeholder="Ej: María Fernanda Quispe Ttito">
+    <label for="f-nombre">Apellidos y nombres</label>
+    <input type="text" id="f-nombre" placeholder="Ej: Quispe Ttito, María Fernanda">
     <div class="error-msg" id="err-nombre"></div>
 
     <label for="f-dni">DNI</label>
@@ -517,7 +517,7 @@
     </select>
     <div class="error-msg" id="err-ocupacion"></div>
 
-    <div class="hint">El pretest tiene 15 preguntas y una duración máxima de 20 minutos. Una vez iniciado, el cronómetro no se detiene.</div>
+    <div class="hint">El pretest tiene 20 preguntas y una duración máxima de 40 minutos. Una vez iniciado, el cronómetro no se detiene.</div>
 
     <div class="actions">
       <button class="btn btn-primary" onclick="startExam()">Iniciar pretest</button>
@@ -528,7 +528,7 @@
   <div class="card hidden" id="screen-exam">
     <div class="exam-head">
       <div class="who">Participante: <b id="who-name">-</b> · DNI <b id="who-dni">-</b></div>
-      <div class="timer" id="timer">20:00</div>
+      <div class="timer" id="timer">40:00</div>
     </div>
     <div class="progressbar"><div id="progress-fill"></div></div>
 
@@ -657,7 +657,7 @@ const QUESTIONS = [
    o:["Ausencia de fiebre por al menos 24-48 horas sin uso de antipiréticos","Persistencia de dolor abdominal intenso","Hematocrito en ascenso progresivo","Recuento de plaquetas en descenso continuo"], a:0},
 ];
 
-const EXAM_SECONDS = 20*60;
+const EXAM_SECONDS = 40*60;
 let answers = new Array(QUESTIONS.length).fill(null);
 let currentQ = 0;
 let timeLeft = EXAM_SECONDS;
@@ -993,7 +993,7 @@ function openAdminPanel(){
     wrap.innerHTML = '<div class="admin-empty">Aún no hay participantes registrados en este dispositivo.</div>';
   } else {
     let html = '<table class="admin-table"><thead><tr>' +
-      '<th>Fecha</th><th>Nombres y apellidos</th><th>DNI</th><th>Ocupación</th><th>Puntaje</th><th>%</th><th>Tiempo</th><th>Agotado</th>' +
+      '<th>Fecha</th><th>Apellidos y nombres</th><th>DNI</th><th>Ocupación</th><th>Puntaje</th><th>%</th><th>Tiempo</th><th>Agotado</th>' +
       '</tr></thead><tbody>';
     all.forEach(r=>{
       const mm = Math.floor(r.tiempoSeg/60).toString().padStart(2,'0');
@@ -1016,7 +1016,7 @@ function downloadExcel(){
 
   const rows = all.map(r=>({
     'Fecha': r.fecha,
-    'Nombres y apellidos': r.nombre,
+    'Apellidos y nombres': r.nombre,
     'DNI': r.dni,
     'Ocupación': r.ocupacion,
     'Puntaje': r.puntaje,
