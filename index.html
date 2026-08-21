@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -481,6 +482,25 @@
   .mode-tab:hover{background:rgba(24,120,216,.12);}
   .mode-tab.active{background:var(--blue-700);color:#fff;box-shadow:0 4px 10px rgba(15,95,176,.28);}
 
+  .btn-del{
+    border:none;
+    background:var(--red-600);
+    color:#fff;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:12px;
+    padding:6px 10px;
+    border-radius:7px;
+    cursor:pointer;
+    white-space:nowrap;
+    margin:2px 3px 2px 0;
+    transition:.15s;
+  }
+  .btn-del:hover{background:#a80e1c;}
+  .btn-del:disabled{opacity:.5;cursor:default;}
+  .btn-del.muted{background:var(--gray-200);color:var(--gray-500);}
+  .btn-del.muted:hover{background:var(--gray-200);}
+
   .review-hidden-note{
     text-align:center;
     background:var(--blue-100);
@@ -652,7 +672,7 @@
       <button class="btn btn-primary" onclick="downloadExcel()">Descargar Excel (.xlsx)</button>
       <button class="btn btn-ghost" onclick="closeAdminPanel()">Cerrar panel</button>
     </div>
-    <div id="admin-table-wrap"></div>
+    <div id="admin-table-wrap" style="overflow-x:auto;"></div>
   </div>
 </div>
 
@@ -1238,9 +1258,9 @@ async function openAdminPanel(){
     let html = '<table class="admin-table"><thead><tr>' +
       '<th>Fecha</th><th>Apellidos y nombres</th><th>DNI</th><th>Ocupación</th>' +
       '<th>Puntaje Pretest</th><th>% Pretest</th><th>Tiempo</th><th>Agotado</th>' +
-      '<th>Nota Examen</th><th>% Examen</th><th>Fecha Examen</th>' +
+      '<th>Nota Examen</th><th>% Examen</th><th>Fecha Examen</th><th>Acciones</th>' +
       '</tr></thead><tbody>';
-    all.forEach(r=>{
+    all.forEach((r,idx)=>{
       let pretestCells;
       if(r._onlyExam){
         pretestCells = '<td>-</td><td>-</td><td>-</td><td>-</td>';
@@ -1258,7 +1278,14 @@ async function openAdminPanel(){
       } else {
         examCells = '<td>Pendiente</td><td>-</td><td>-</td>';
       }
-      html += `<tr><td>${r.fecha}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.ocupacion}</td>${pretestCells}${examCells}</tr>`;
+      const delPretestBtn = r._onlyExam
+        ? '<button class="btn-del muted" disabled>Sin pretest</button>'
+        : `<button class="btn-del" onclick="requestDelete(${idx},'pretest')">Eliminar pretest</button>`;
+      const delExamBtn = r._exam
+        ? `<button class="btn-del" onclick="requestDelete(${idx},'examen')">Eliminar examen</button>`
+        : '<button class="btn-del muted" disabled>Sin examen</button>';
+      const actionsCell = `<td>${delPretestBtn}${delExamBtn}</td>`;
+      html += `<tr><td>${r.fecha}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.ocupacion}</td>${pretestCells}${examCells}${actionsCell}</tr>`;
     });
     html += '</tbody></table>';
     wrap.innerHTML = html;
@@ -1266,6 +1293,39 @@ async function openAdminPanel(){
 }
 function closeAdminPanel(){
   document.getElementById('admin-panel').classList.add('hidden');
+}
+
+/* ---------------- ELIMINAR REGISTROS ---------------- */
+function requestDelete(rowIndex, type){
+  const row = lastAdminData[rowIndex];
+  if(!row) return;
+
+  let collectionName, docId, label;
+  if(type==='pretest'){
+    if(row._onlyExam || !row.id) return;
+    collectionName = MODE_CONFIG.pretest.collection;
+    docId = row.id;
+    label = 'el registro de PRETEST';
+  } else {
+    if(!row._exam || !row._exam.id) return;
+    collectionName = MODE_CONFIG.examen.collection;
+    docId = row._exam.id;
+    label = 'el registro de EXAMEN';
+  }
+
+  const ok = confirm(`¿Eliminar ${label} de ${row.nombre} (DNI ${row.dni})?\n\nEsta acción no se puede deshacer.`);
+  if(!ok) return;
+
+  deleteRecord(collectionName, docId);
+}
+async function deleteRecord(collectionName, docId){
+  try{
+    await db.collection(collectionName).doc(docId).delete();
+    await openAdminPanel();
+  }catch(e){
+    console.error('No se pudo eliminar el registro:', e);
+    alert('No se pudo eliminar el registro. Verifique su conexión e intente de nuevo.');
+  }
 }
 
 function downloadExcel(){
