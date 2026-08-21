@@ -455,6 +455,42 @@
     text-align:center;color:var(--gray-500);
     padding:40px 0;font-size:13.5px;
   }
+
+  .mode-tabs{
+    display:flex;
+    gap:8px;
+    background:var(--blue-100);
+    padding:5px;
+    border-radius:12px;
+    margin-bottom:22px;
+  }
+  .mode-tab{
+    flex:1;
+    border:none;
+    background:transparent;
+    color:var(--blue-700);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13.5px;
+    letter-spacing:.3px;
+    padding:10px 12px;
+    border-radius:9px;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .mode-tab:hover{background:rgba(24,120,216,.12);}
+  .mode-tab.active{background:var(--blue-700);color:#fff;box-shadow:0 4px 10px rgba(15,95,176,.28);}
+
+  .review-hidden-note{
+    text-align:center;
+    background:var(--blue-100);
+    color:var(--blue-700);
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:13.5px;
+    font-weight:600;
+    margin-top:6px;
+  }
 </style>
 </head>
 <body>
@@ -482,7 +518,7 @@
   </div>
   <div class="step" id="step2">
     <div class="circ">2</div>
-    Pretest
+    <span id="step2-label">Pretest</span>
   </div>
   <div class="step" id="step3">
     <div class="circ">3</div>
@@ -494,8 +530,14 @@
 
   <!-- PANTALLA 1: REGISTRO -->
   <div class="card" id="screen-register">
-    <h1>Datos del participante</h1>
-    <div class="sub">Complete sus datos para iniciar el pretest del curso.</div>
+
+    <div class="mode-tabs">
+      <button type="button" class="mode-tab active" id="tab-pretest" onclick="selectMode('pretest')">Pretest</button>
+      <button type="button" class="mode-tab" id="tab-examen" onclick="selectMode('examen')">Examen</button>
+    </div>
+
+    <h1 id="reg-title">Datos del participante</h1>
+    <div class="sub" id="reg-sub">Complete sus datos para iniciar el pretest del curso.</div>
 
     <label for="f-nombre">Apellidos y nombres</label>
     <input type="text" id="f-nombre" placeholder="Ej: Quispe Ttito, María Fernanda">
@@ -519,7 +561,7 @@
     </select>
     <div class="error-msg" id="err-ocupacion"></div>
 
-    <div class="hint">El pretest tiene 20 preguntas y una duración máxima de 40 minutos. Una vez iniciado, el cronómetro no se detiene.</div>
+    <div class="hint" id="reg-hint">El pretest tiene 20 preguntas y una duración máxima de 40 minutos. Una vez iniciado, el cronómetro no se detiene.</div>
 
     <div class="actions">
       <button class="btn btn-primary" id="btn-start" onclick="startExam()">Iniciar pretest</button>
@@ -570,8 +612,8 @@
   <!-- PANTALLA 4: DNI YA REGISTRADO (BLOQUEO) -->
   <div class="card hidden" id="screen-locked">
     <div class="lock-icon">&#128274;</div>
-    <h1 style="text-align:center;">Este DNI ya rindió el pretest</h1>
-    <div class="sub" style="text-align:center;">No es posible volver a dar el examen con el mismo número de documento.</div>
+    <h1 style="text-align:center;" id="lk-title">Este DNI ya rindió el pretest</h1>
+    <div class="sub" style="text-align:center;" id="lk-sub">No es posible volver a dar el examen con el mismo número de documento.</div>
     <div class="summary-grid">
       <div class="summary-box"><div class="k">Participante</div><div class="v" id="lk-name">-</div></div>
       <div class="summary-box"><div class="k">DNI</div><div class="v" id="lk-dni">-</div></div>
@@ -615,8 +657,8 @@
 </div>
 
 <script>
-/* ---------------- BANCO DE PREGUNTAS ---------------- */
-const QUESTIONS = [
+/* ---------------- BANCO DE PREGUNTAS: PRETEST ---------------- */
+const QUESTIONS_PRETEST = [
   {q:"¿Cuál es el vector principal de transmisión del dengue en el Perú?",
    o:["Anopheles sp.","Aedes aegypti","Culex sp.","Lutzomyia sp."], a:1},
   {q:"Según la clasificación de la OMS 2009, el dengue se clasifica en:",
@@ -659,6 +701,82 @@ const QUESTIONS = [
    o:["Ausencia de fiebre por al menos 24-48 horas sin uso de antipiréticos","Persistencia de dolor abdominal intenso","Hematocrito en ascenso progresivo","Recuento de plaquetas en descenso continuo"], a:0},
 ];
 
+/* ---------------- BANCO DE PREGUNTAS: EXAMEN ---------------- */
+const QUESTIONS_EXAMEN = [
+  {q:"¿Cuál es el principal mecanismo de transmisión del dengue?",
+   o:["Contacto directo con una persona infectada","Picadura de la hembra infectada del mosquito Aedes aegypti","Consumo de agua contaminada","Transmisión por vía respiratoria"], a:1},
+  {q:"¿Cuántos serotipos del virus del dengue se reconocen?",
+   o:["Dos","Tres","Cuatro","Cinco"], a:2},
+  {q:"¿Qué serotipos fueron identificados en circulación en el Perú durante 2025, según el material presentado?",
+   o:["DENV-1 y DENV-4","DENV-1, DENV-2 y DENV-3","DENV-2, DENV-3 y DENV-4","DENV-1, DENV-2, DENV-3 y DENV-4"], a:1},
+  {q:"¿Cuál es la secuencia correcta del ciclo de vida del Aedes aegypti?",
+   o:["Huevo, pupa, larva y adulto","Larva, huevo, adulto y pupa","Huevo, larva, pupa y adulto","Pupa, larva, huevo y adulto"], a:2},
+  {q:"¿Cuál de los siguientes lugares puede constituir un criadero del Aedes aegypti?",
+   o:["Recipiente con agua acumulada","Superficie completamente seca","Ambiente cerrado sin agua","Recipiente limpio, seco y tapado"], a:0},
+  {q:"¿Cuál es una medida apropiada para reducir los criaderos del mosquito?",
+   o:["Mantener destapados los depósitos de agua","Acumular recipientes en el patio","Lavar, cepillar y tapar los recipientes de agua","Cambiar el agua solamente una vez al mes"], a:2},
+  {q:"¿Cuándo suele presentarse el mayor riesgo clínico de complicaciones por dengue?",
+   o:["Únicamente durante el primer día de fiebre","Cuando la fiebre comienza a desaparecer","Después de un mes de la infección","Antes de la picadura del mosquito"], a:1},
+  {q:"¿Cuánto suele durar la fase crítica del dengue?",
+   o:["Entre 2 y 4 horas","Entre 6 y 12 horas","Entre 24 y 48 horas","Entre 7 y 14 días"], a:2},
+  {q:"¿Cuál de los siguientes es un signo de alarma del dengue?",
+   o:["Aumento progresivo de las plaquetas","Dolor abdominal intenso y sostenido","Incremento del apetito","Poliuria sin otros síntomas"], a:1},
+  {q:"¿Cuál de los siguientes hallazgos también constituye un signo de alarma?",
+   o:["Vómitos persistentes","Tos seca aislada","Prurito leve","Estornudos frecuentes"], a:0},
+  {q:"¿Qué alteración de laboratorio puede acompañar el inicio de la fase crítica?",
+   o:["Disminución del hematocrito con aumento de plaquetas","Aumento del hematocrito con disminución de plaquetas","Aumento simultáneo de hemoglobina y plaquetas","Disminución aislada de glucosa"], a:1},
+  {q:"¿Cuáles son los tres componentes principales del dengue grave?",
+   o:["Fiebre, cefalea y dolor muscular","Exudación nasal, tos y disnea","Extravasación grave de plasma, hemorragia grave y daño orgánico grave","Náuseas, diarrea y pérdida del apetito"], a:2},
+  {q:"¿Qué prueba es más útil durante los primeros cinco días de la enfermedad?",
+   o:["Serología IgG como única prueba","Detección de NS1 o prueba molecular","Prueba cutánea de alergia","Cultivo bacteriano de sangre"], a:1},
+  {q:"En un paciente con más de cinco días de enfermedad, ¿qué prueba adquiere mayor utilidad?",
+   o:["Detección serológica de anticuerpos IgM","Dosaje de troponina como prueba confirmatoria","Radiografía de tórax","Prueba de tuberculina"], a:0},
+  {q:"¿Cuál es el tratamiento principal del paciente con dengue sin signos de alarma?",
+   o:["Antibióticos de amplio espectro","Hidratación oral, vigilancia clínica y educación sobre signos de alarma","Transfusión profiláctica de plaquetas","Corticoides en dosis altas"], a:1},
+  {q:"¿Qué medicamento puede utilizarse para controlar la fiebre en un paciente con dengue?",
+   o:["Ácido acetilsalicílico","Ibuprofeno","Naproxeno","Paracetamol"], a:3},
+  {q:"¿Qué medicamentos deben evitarse por el riesgo de sangrado?",
+   o:["Antiinflamatorios no esteroideos y ácido acetilsalicílico","Sales de rehidratación oral","Paracetamol en dosis adecuada","Soluciones cristaloides isotónicas"], a:0},
+  {q:"¿Qué conducta corresponde a un paciente del Grupo B2?",
+   o:["Manejo domiciliario sin seguimiento","Inicio inmediato de hidratación intravenosa y hospitalización","Administración obligatoria de antibióticos","Alta inmediata al desaparecer la fiebre"], a:1},
+  {q:"¿Cuál es la solución recomendada inicialmente para la hidratación intravenosa?",
+   o:["Solución glucosada hipertónica","Coloides como primera elección en todos los casos","Cristaloides isotónicos","Agua destilada intravenosa"], a:2},
+  {q:"¿Cuál es uno de los criterios para considerar el alta hospitalaria?",
+   o:["Ausencia de fiebre por 48 horas sin antipiréticos","Persistencia de signos de alarma","Hematocrito progresivamente elevado","Inestabilidad hemodinámica"], a:0},
+];
+
+/* ---------------- CONFIGURACIÓN POR MODO (Pretest / Examen) ---------------- */
+const MODE_CONFIG = {
+  pretest: {
+    questions: QUESTIONS_PRETEST,
+    collection: 'dengue_pretest_attempts',
+    progressKey: 'dengue_pretest_inprogress',
+    stepLabel: 'Pretest',
+    regTitle: 'Datos del participante',
+    regSub: 'Complete sus datos para iniciar el pretest del curso.',
+    regHint: 'El pretest tiene 20 preguntas y una duración máxima de 40 minutos. Una vez iniciado, el cronómetro no se detiene.',
+    startBtn: 'Iniciar pretest',
+    finishBtn: 'Finalizar pretest',
+    lockedTitle: 'Este DNI ya rindió el pretest',
+    lockedSub: 'No es posible volver a dar el pretest con el mismo número de documento.',
+    showReview: true
+  },
+  examen: {
+    questions: QUESTIONS_EXAMEN,
+    collection: 'dengue_examen_attempts',
+    progressKey: 'dengue_examen_inprogress',
+    stepLabel: 'Examen',
+    regTitle: 'Datos del participante · Examen',
+    regSub: 'Complete sus datos para iniciar el examen del curso.',
+    regHint: 'El examen tiene 20 preguntas y una duración máxima de 40 minutos. Una vez iniciado, el cronómetro no se detiene. Al finalizar solo se mostrará su puntaje, sin indicar qué preguntas fueron correctas o incorrectas.',
+    startBtn: 'Iniciar examen',
+    finishBtn: 'Finalizar examen',
+    lockedTitle: 'Este DNI ya rindió el examen',
+    lockedSub: 'No es posible volver a dar el examen con el mismo número de documento.',
+    showReview: false
+  }
+};
+
 /* ---------------- FIREBASE ---------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyB1dzHxpCWCAdOa3ui5eijf39MmGLPJHD4",
@@ -671,9 +789,10 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const ATTEMPTS_COLLECTION = 'dengue_pretest_attempts';
 
 const EXAM_SECONDS = 40*60;
+let currentMode = 'pretest';
+let QUESTIONS = MODE_CONFIG[currentMode].questions;
 let answers = new Array(QUESTIONS.length).fill(null);
 let currentQ = 0;
 let timeLeft = EXAM_SECONDS;
@@ -681,7 +800,28 @@ let timerId = null;
 let participant = {};
 let submitted = false;
 let examStartTs = null;
-const PROGRESS_KEY = 'dengue_pretest_inprogress';
+
+/* ---------------- SELECCIÓN DE MODO (Pretest / Examen) ---------------- */
+function selectMode(mode){
+  currentMode = mode;
+  QUESTIONS = MODE_CONFIG[mode].questions;
+  answers = new Array(QUESTIONS.length).fill(null);
+  currentQ = 0;
+
+  document.getElementById('tab-pretest').classList.toggle('active', mode==='pretest');
+  document.getElementById('tab-examen').classList.toggle('active', mode==='examen');
+
+  const cfg = MODE_CONFIG[mode];
+  document.getElementById('reg-title').textContent = cfg.regTitle;
+  document.getElementById('reg-sub').textContent = cfg.regSub;
+  document.getElementById('reg-hint').textContent = cfg.regHint;
+  document.getElementById('btn-start').textContent = cfg.startBtn;
+  document.getElementById('step2-label').textContent = cfg.stepLabel;
+
+  document.getElementById('err-nombre').textContent='';
+  document.getElementById('err-dni').textContent='';
+  document.getElementById('err-ocupacion').textContent='';
+}
 
 /* ---------------- REGISTRO ---------------- */
 async function startExam(){
@@ -715,7 +855,7 @@ async function startExam(){
 
   let previous;
   try{
-    previous = await findAttemptByDni(dni);
+    previous = await findAttemptByDni(dni, MODE_CONFIG[currentMode].collection);
   }catch(e){
     btn.disabled = false;
     btn.textContent = originalText;
@@ -752,6 +892,7 @@ async function startExam(){
 /* ---------------- GUARDADO AUTOMÁTICO DE PROGRESO ---------------- */
 function saveProgress(){
   const state = {
+    mode: currentMode,
     nombre: participant.nombre,
     dni: participant.dni,
     ocup: participant.ocup,
@@ -759,23 +900,31 @@ function saveProgress(){
     currentQ: currentQ,
     examStartTs: examStartTs
   };
-  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch(e){}
+  try{ localStorage.setItem(MODE_CONFIG[currentMode].progressKey, JSON.stringify(state)); }catch(e){}
 }
 function clearProgress(){
-  localStorage.removeItem(PROGRESS_KEY);
+  localStorage.removeItem(MODE_CONFIG[currentMode].progressKey);
 }
 async function tryResumeProgress(){
-  let raw;
-  try{ raw = localStorage.getItem(PROGRESS_KEY); }catch(e){ raw = null; }
+  // Revisa si hay un pretest o un examen en curso (lo que se encuentre primero).
+  let foundMode = null, raw = null;
+  for(const m of ['pretest','examen']){
+    let r;
+    try{ r = localStorage.getItem(MODE_CONFIG[m].progressKey); }catch(e){ r = null; }
+    if(r){ foundMode = m; raw = r; break; }
+  }
   if(!raw) return;
+
   let state;
-  try{ state = JSON.parse(raw); }catch(e){ clearProgress(); return; }
-  if(!state || !state.dni || !state.examStartTs) { clearProgress(); return; }
+  try{ state = JSON.parse(raw); }catch(e){ localStorage.removeItem(MODE_CONFIG[foundMode].progressKey); return; }
+  if(!state || !state.dni || !state.examStartTs) { localStorage.removeItem(MODE_CONFIG[foundMode].progressKey); return; }
+
+  selectMode(foundMode);
 
   // Si ese DNI ya tiene un intento finalizado, el progreso guardado quedó obsoleto.
   let already;
-  try{ already = await findAttemptByDni(state.dni); }catch(e){ already = null; }
-  if(already){ clearProgress(); return; }
+  try{ already = await findAttemptByDni(state.dni, MODE_CONFIG[foundMode].collection); }catch(e){ already = null; }
+  if(already){ localStorage.removeItem(MODE_CONFIG[foundMode].progressKey); return; }
 
   participant = {nombre: state.nombre, dni: state.dni, ocup: state.ocup};
   answers = state.answers && state.answers.length === QUESTIONS.length ? state.answers : new Array(QUESTIONS.length).fill(null);
@@ -802,17 +951,20 @@ async function tryResumeProgress(){
   }
 }
 
-/* Consulta Firestore: ¿este DNI ya tiene un intento registrado? */
-async function findAttemptByDni(dni){
-  const snap = await db.collection(ATTEMPTS_COLLECTION).where('dni','==',dni).limit(1).get();
+/* Consulta Firestore: ¿este DNI ya tiene un intento registrado en esa colección? */
+async function findAttemptByDni(dni, collectionName){
+  const snap = await db.collection(collectionName).where('dni','==',dni).limit(1).get();
   if(snap.empty) return null;
   const doc = snap.docs[0];
   return { id: doc.id, ...doc.data() };
 }
 
 function showLockedScreen(record){
+  const cfg = MODE_CONFIG[currentMode];
   document.getElementById('screen-register').classList.add('hidden');
   document.getElementById('screen-locked').classList.remove('hidden');
+  document.getElementById('lk-title').textContent = cfg.lockedTitle;
+  document.getElementById('lk-sub').textContent = cfg.lockedSub;
   document.getElementById('lk-name').textContent = record.nombre;
   document.getElementById('lk-dni').textContent = record.dni;
   document.getElementById('lk-score').textContent = `${record.puntaje} / ${record.total}`;
@@ -894,7 +1046,7 @@ function renderQuestion(){
 
   document.getElementById('progress-fill').style.width = ((currentQ+1)/QUESTIONS.length*100)+'%';
   document.getElementById('btn-prev').style.visibility = currentQ===0 ? 'hidden':'visible';
-  document.getElementById('btn-next').textContent = currentQ===QUESTIONS.length-1 ? 'Finalizar pretest':'Siguiente';
+  document.getElementById('btn-next').textContent = currentQ===QUESTIONS.length-1 ? MODE_CONFIG[currentMode].finishBtn : 'Siguiente';
 
   QUESTIONS.forEach((_,i)=>{
     const d = document.getElementById('dot'+i);
@@ -959,21 +1111,25 @@ async function finishExam(byTimeout){
 
   const review = document.getElementById('review');
   review.innerHTML='';
-  const letters=['A','B','C','D'];
-  QUESTIONS.forEach((item,i)=>{
-    const given = answers[i];
-    const isCorrect = given===item.a;
-    const div = document.createElement('div');
-    div.className='review-item';
-    div.innerHTML = `
-      <div class="q">${i+1}. ${item.q}</div>
-      <div class="a ${isCorrect?'correct':'wrong'}">
-        Su respuesta: ${given===null ? 'Sin responder' : letters[given]+') '+item.o[given]}
-      </div>
-      ${!isCorrect ? `<div class="a correct">Respuesta correcta: ${letters[item.a]}) ${item.o[item.a]}</div>` : ''}
-    `;
-    review.appendChild(div);
-  });
+  if(MODE_CONFIG[currentMode].showReview){
+    const letters=['A','B','C','D'];
+    QUESTIONS.forEach((item,i)=>{
+      const given = answers[i];
+      const isCorrect = given===item.a;
+      const div = document.createElement('div');
+      div.className='review-item';
+      div.innerHTML = `
+        <div class="q">${i+1}. ${item.q}</div>
+        <div class="a ${isCorrect?'correct':'wrong'}">
+          Su respuesta: ${given===null ? 'Sin responder' : letters[given]+') '+item.o[given]}
+        </div>
+        ${!isCorrect ? `<div class="a correct">Respuesta correcta: ${letters[item.a]}) ${item.o[item.a]}</div>` : ''}
+      `;
+      review.appendChild(div);
+    });
+  } else {
+    review.innerHTML = '<div class="review-hidden-note">Solo se muestra su puntaje. El detalle de preguntas correctas e incorrectas no se publica para este examen.</div>';
+  }
 
   await saveAttempt(correct, usedSeconds, byTimeout);
   clearProgress();
@@ -993,14 +1149,14 @@ async function saveAttempt(correct, usedSeconds, byTimeout){
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
   try{
-    await db.collection(ATTEMPTS_COLLECTION).add(record);
+    await db.collection(MODE_CONFIG[currentMode].collection).add(record);
   }catch(e){
     console.error('No se pudo guardar el intento en Firestore:', e);
   }
 }
 
 /* ---------------- PANEL ADMINISTRADOR ---------------- */
-const ADMIN_PASSWORD = "dengue2026"; // cámbiala aquí si lo deseas
+const ADMIN_PASSWORD = "12345"; // cámbiala aquí si lo deseas
 
 function openAdminLogin(){
   document.getElementById('admin-pass').value='';
@@ -1019,10 +1175,43 @@ function checkAdminLogin(){
     document.getElementById('admin-err').textContent = 'Clave incorrecta.';
   }
 }
-async function getAllAttempts(){
-  const snap = await db.collection(ATTEMPTS_COLLECTION).orderBy('timestamp','desc').get();
+async function getAllAttempts(collectionName){
+  const snap = await db.collection(collectionName).orderBy('timestamp','desc').get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
+
+/* Cruza pretest y examen por DNI. Base = pretest; se agregan las columnas
+   de examen cuando existe un registro con el mismo DNI. Los DNI que solo
+   rindieron el examen (sin pretest) se agregan al final. */
+async function getMergedAdminData(){
+  const [pretestAll, examenAll] = await Promise.all([
+    getAllAttempts(MODE_CONFIG.pretest.collection),
+    getAllAttempts(MODE_CONFIG.examen.collection)
+  ]);
+
+  const examMap = {};
+  examenAll.forEach(r => { examMap[r.dni] = r; });
+
+  const usedDni = new Set();
+  const merged = pretestAll.map(r=>{
+    usedDni.add(r.dni);
+    const ex = examMap[r.dni] || null;
+    return { ...r, _exam: ex };
+  });
+
+  examenAll.forEach(r=>{
+    if(!usedDni.has(r.dni)){
+      merged.push({
+        fecha:'-', nombre:r.nombre, dni:r.dni, ocupacion:r.ocupacion,
+        puntaje:null, total:null, tiempoSeg:null, tiempoAgotado:'-',
+        _exam:r, _onlyExam:true
+      });
+    }
+  });
+
+  return merged;
+}
+
 let lastAdminData = [];
 async function openAdminPanel(){
   document.getElementById('admin-panel').classList.remove('hidden');
@@ -1032,7 +1221,7 @@ async function openAdminPanel(){
 
   let all;
   try{
-    all = await getAllAttempts();
+    all = await getMergedAdminData();
   }catch(e){
     console.error(e);
     document.getElementById('admin-count').textContent = '';
@@ -1040,19 +1229,36 @@ async function openAdminPanel(){
     return;
   }
   lastAdminData = all;
-  document.getElementById('admin-count').textContent = `${all.length} registro${all.length===1?'':'s'}`;
+  const nExam = all.filter(r=>r._exam).length;
+  document.getElementById('admin-count').textContent = `${all.length} registro${all.length===1?'':'s'} · ${nExam} con examen`;
 
   if(all.length===0){
     wrap.innerHTML = '<div class="admin-empty">Aún no hay participantes registrados.</div>';
   } else {
     let html = '<table class="admin-table"><thead><tr>' +
-      '<th>Fecha</th><th>Apellidos y nombres</th><th>DNI</th><th>Ocupación</th><th>Puntaje</th><th>%</th><th>Tiempo</th><th>Agotado</th>' +
+      '<th>Fecha</th><th>Apellidos y nombres</th><th>DNI</th><th>Ocupación</th>' +
+      '<th>Puntaje Pretest</th><th>% Pretest</th><th>Tiempo</th><th>Agotado</th>' +
+      '<th>Nota Examen</th><th>% Examen</th><th>Fecha Examen</th>' +
       '</tr></thead><tbody>';
     all.forEach(r=>{
-      const mm = Math.floor(r.tiempoSeg/60).toString().padStart(2,'0');
-      const ss = (r.tiempoSeg%60).toString().padStart(2,'0');
-      const pct = Math.round(r.puntaje/r.total*100);
-      html += `<tr><td>${r.fecha}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.ocupacion}</td><td>${r.puntaje}/${r.total}</td><td>${pct}%</td><td>${mm}:${ss}</td><td>${r.tiempoAgotado}</td></tr>`;
+      let pretestCells;
+      if(r._onlyExam){
+        pretestCells = '<td>-</td><td>-</td><td>-</td><td>-</td>';
+      } else {
+        const mm = Math.floor(r.tiempoSeg/60).toString().padStart(2,'0');
+        const ss = (r.tiempoSeg%60).toString().padStart(2,'0');
+        const pct = Math.round(r.puntaje/r.total*100);
+        pretestCells = `<td>${r.puntaje}/${r.total}</td><td>${pct}%</td><td>${mm}:${ss}</td><td>${r.tiempoAgotado}</td>`;
+      }
+      let examCells;
+      if(r._exam){
+        const ex = r._exam;
+        const expct = Math.round(ex.puntaje/ex.total*100);
+        examCells = `<td>${ex.puntaje}/${ex.total}</td><td>${expct}%</td><td>${ex.fecha}</td>`;
+      } else {
+        examCells = '<td>Pendiente</td><td>-</td><td>-</td>';
+      }
+      html += `<tr><td>${r.fecha}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.ocupacion}</td>${pretestCells}${examCells}</tr>`;
     });
     html += '</tbody></table>';
     wrap.innerHTML = html;
@@ -1066,26 +1272,34 @@ function downloadExcel(){
   const all = lastAdminData;
   if(!all || all.length===0) return;
 
-  const rows = all.map(r=>({
-    'Fecha': r.fecha,
-    'Apellidos y nombres': r.nombre,
-    'DNI': r.dni,
-    'Ocupación': r.ocupacion,
-    'Puntaje': r.puntaje,
-    'Total preguntas': r.total,
-    'Porcentaje': Math.round(r.puntaje/r.total*100)+'%',
-    'Tiempo utilizado (seg)': r.tiempoSeg,
-    'Tiempo agotado': r.tiempoAgotado
-  }));
+  const rows = all.map(r=>{
+    const ex = r._exam;
+    return {
+      'Fecha Pretest': r.fecha,
+      'Apellidos y nombres': r.nombre,
+      'DNI': r.dni,
+      'Ocupación': r.ocupacion,
+      'Puntaje Pretest': r._onlyExam ? '' : r.puntaje,
+      'Total preguntas Pretest': r._onlyExam ? '' : r.total,
+      'Porcentaje Pretest': r._onlyExam ? '' : Math.round(r.puntaje/r.total*100)+'%',
+      'Tiempo utilizado Pretest (seg)': r._onlyExam ? '' : r.tiempoSeg,
+      'Tiempo agotado Pretest': r._onlyExam ? '' : r.tiempoAgotado,
+      'Nota Examen': ex ? ex.puntaje : '',
+      'Total preguntas Examen': ex ? ex.total : '',
+      'Porcentaje Examen': ex ? Math.round(ex.puntaje/ex.total*100)+'%' : '',
+      'Fecha Examen': ex ? ex.fecha : ''
+    };
+  });
 
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{wch:18},{wch:30},{wch:10},{wch:22},{wch:9},{wch:14},{wch:11},{wch:20},{wch:13}];
+  ws['!cols'] = [{wch:18},{wch:30},{wch:10},{wch:22},{wch:14},{wch:16},{wch:14},{wch:20},{wch:16},{wch:11},{wch:16},{wch:14},{wch:18}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Resultados');
-  XLSX.writeFile(wb, 'resultados_pretest_dengue.xlsx');
+  XLSX.writeFile(wb, 'resultados_pretest_y_examen_dengue.xlsx');
 }
 
 /* ---------------- INICIO: reanudar examen en curso si existe ---------------- */
+selectMode('pretest');
 tryResumeProgress();
 </script>
 </body>
